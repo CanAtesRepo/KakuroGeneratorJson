@@ -1,0 +1,2 @@
+# Kakuro
+Kakuro puzzle solver

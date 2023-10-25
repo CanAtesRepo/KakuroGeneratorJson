@@ -8,6 +8,55 @@ public class Kakuro { // Kakuro puzzle solver
         forbidden = new bool[vert.Length, horz.Length, 9];
     }
 
+    public Kakuro(int width, int height, Random random) {
+        var grid = new int[height, width];
+        for (int pass = 0;; pass++) {
+            for (int v = 0; v < height; v++)
+                for (int h = 0; h < width; h++) {
+                    int n;
+                    do {
+                        n = random.Next(9) + 1;
+                    } while (RowColHasValue(grid, v, h, n));
+                    grid[v, h] = n;
+                }
+            this.horz = new int[width];
+            this.vert = new int[height];
+            this.forbidden = new bool[height, width, 9];
+            for (int v = 0; v < height; v++)
+                for (int h = 0; h < width; h++) {
+                    this.horz[h] += grid[v, h];
+                    this.vert[v] += grid[v, h];
+                }
+            Solve();
+            if (Solved()) break;
+        }
+        this.forbidden = new bool[height, width, 9];
+    }
+
+    private bool RowColHasValue(int[,] grid, int v, int h, int n) {
+        for (int i = 0; i < grid.GetLength(0); i++)
+            for (int j = 0; j < grid.GetLength(1); j++)
+                if (i == v && grid[i, j] == n || j == h && grid[i, j] == n)
+                    return true;
+        return false;
+    }
+
+    public bool Solved() {
+        int[] vSum = new int[vert.Length], hSum = new int[horz.Length];
+        for (int i = 0; i < vert.Length; i++)
+            for (int j = 0; j < horz.Length; j++) {
+                int n = GetValue(i, j);
+                if (n == 0) return false;
+                vSum[i] += n;
+                hSum[j] += n;
+            }
+        for (int i = 0; i < vert.Length; i++)
+            if (vSum[i] != vert[i]) return false;
+        for (int j = 0; j < horz.Length; j++)
+            if (hSum[j] != horz[j]) return false;
+        return true;
+    }
+
     public void Solve() {
         for (int pass = 0; pass < 100; pass++) {
             bool didSomething = false;
@@ -54,8 +103,7 @@ public class Kakuro { // Kakuro puzzle solver
         return false;
     }
 
-    public bool Print() { // returns true if solved
-        bool isSolved = true;
+    public void Print() { // returns true if solved
         Console.Write("  ");
         for (int h = 0; h < horz.Length; h++)
             Console.Write(" " + horz[h].ToString().PadLeft(2));
@@ -64,15 +112,13 @@ public class Kakuro { // Kakuro puzzle solver
             Console.Write(vert[v].ToString().PadLeft(2));
             for (int h = 0; h < horz.Length; h++) {
                 var n = GetValue(v, h);
-                isSolved &= n > 0;
                 Console.Write(n > 0 ? n.ToString().PadLeft(3) : " ??");
             }
             Console.WriteLine();
         }
-        return isSolved;
     }
 
-    private int GetValue(int v, int h) {
+    public int GetValue(int v, int h) {
         int value = 0;
         for (int n = 1; n <= 9; n++)
             if (!forbidden[v, h, n - 1]) {
